@@ -1,0 +1,22 @@
+{
+  "name": "tetherow",
+  "version": "0.0.0",
+  "authors": [
+    "Morgan O'Neal <morgan@ghostbyte.com>"
+  ],
+  "description": "WordPress design for Tetherow",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-sass-official": "~>3.3.3",
+    "font-awesome": "~4.3.0",
+    "jquery-cycle2": "~2.1.6"
+  }
+}

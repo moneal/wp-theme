@@ -1,0 +1,24 @@
+default:
+  autoload:
+      - %paths.base%/features/bootstrap
+  suites:
+    default:
+      contexts:
+        - Tmf\WordPressExtension\Context\WordPressContext
+        - FeatureContext
+  extensions:
+    Tmf\WordPressExtension:
+      path: '%paths.base%/vendor/wordpress'
+      symlink:
+        from: dist
+        to: vendor/wordpress/wp-content/themes/development
+      connection:
+        db: wordpress
+        username: root
+        password: ~
+
+    Behat\MinkExtension:
+      base_url:    'http://localhost:3000'
+      sessions:
+        default:
+          goutte: ~
