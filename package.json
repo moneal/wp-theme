@@ -1,5 +1,5 @@
 {
-  "name": "moneal/wp-theme-starter",
+  "name": "wp-theme-starter",
   "version": "0.0.0",
   "description": "Tools for WordPress starter theme",
   "main": "index.js",
@@ -36,5 +36,9 @@
     "gulp-debug": "~2.0.0",
     "gulp-changed": "~1.1.1",
     "gulp-clean": "~0.3.1"
+  },
+  "dependencies": {
+    "imagemin-optipng": "~4.2.0",
+    "imagemin-pngquant": "~4.0.0"
   }
 }

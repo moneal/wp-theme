@@ -18,6 +18,9 @@ var bower = require('gulp-bower');
 
 var spritesmith = require('gulp.spritesmith')
 
+var optipng = require('imagemin-optipng');
+var pngquant = require('imagemin-pngquant');
+
 var jshint = require('gulp-jshint');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -44,9 +47,12 @@ var config = {
         sass: 'assets/sass/**/*.scss',
         images: ['assets/images/**/*'],
         fonts: ['assets/fonts/**/*'],
+        js: ['assets/js/*.js'],
+        utilJs: ['assets/js/util/*.js'],
         css: ['*.css'],
         cssDist: 'assets/css/',
         fontDist: 'assets/fonts/',
+        jsDist: 'assets/js/',
         imageDist: 'assets/images/'
     },
     sassPath: 'assets/sass/style.scss',
@@ -164,6 +170,10 @@ gulp.task('clean', function() {
         .pipe(clean({force:true}));
 });
 
+gulp.task('clear', function (done) {
+    return cache.clearAll(done);
+});
+
 gulp.task('copy-php', [], function() {
     gulp.src(config.paths.php, {cwd: config.bases.app})
         .pipe(gulp.dest(config.bases.dist));
@@ -174,6 +184,9 @@ gulp.task('copy-css', [], function() {
         .pipe(gulp.dest(config.bases.dist));
 });
 gulp.task('copy-fonts', function() {
+    // Font Awesome Fonts
+    gulp.src('*.*', {cwd: config.bowerDir + '/font-awesome/fonts'})
+        .pipe(gulp.dest( config.bases.dist + config.paths.fontDist));
     return gulp.src(config.paths.fonts, {cwd: config.bases.app})
         .pipe(gulp.dest( config.bases.dist + config.paths.fontDist));
 });
@@ -202,23 +215,27 @@ gulp.task('scripts', function() {
             config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/collapse.js',
             config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/dropdown.js',
             config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/modal.js',
-            config.bowerDir + '/jquery-cycle2/build/jquery.cycle2.js'
+            config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/carousel.js',
+            config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/tooltip.js',
+            config.bowerDir + '/bootstrap-sass-official/assets/javascripts/bootstrap/popover.js',
+            config.bowerDir + '/matchHeight/jquery.matchHeight.js',
+            //config.bowerDir + '/jquery-cycle2/build/jquery.cycle2.js'
         ],
         {base: config.bowerDir})
         .pipe(concat('vendor.js'))
-        .pipe(gulp.dest('assets/js'))
+        .pipe(gulp.dest( config.bases.dist + config.paths.jsDist ))
         //.pipe(rename('vendor.min.js'))
         .pipe(uglify())
         //.pipe(gulp.dest('assets/js'))
-        .pipe(rev())
-        .pipe(gulp.dest('assets/js'))
-        .pipe(rev.manifest({merge:true}))
-        .pipe(gulp.dest('./'))
+        //.pipe(rev())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(config.bases.dist + config.paths.jsDist))
+        //.pipe(rev.manifest({merge:true}))
+        //.pipe(gulp.dest('./'))
     ;
-
-    gulp.src('src/js/*.js')
+    gulp.src( config.paths.js, {cwd: config.bases.app})
         .pipe(concat('main.js'))
-        .pipe(gulp.dest('assets/js'))
+        .pipe(gulp.dest(config.bases.dist + config.paths.jsDist))
         //.pipe(rename('main.min.js'))
         .pipe(uglify({
             mangle: {
@@ -226,10 +243,26 @@ gulp.task('scripts', function() {
             }
         }))
         //.pipe(gulp.dest('assets/js'))
-        .pipe(rev())
-        .pipe(gulp.dest('assets/js'))
-        .pipe(rev.manifest({merge:true}))
-        .pipe(gulp.dest('./'))
+        //.pipe(rev())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(config.bases.dist + config.paths.jsDist))
+        //.pipe(rev.manifest({merge:true}))
+        //.pipe(gulp.dest('./'))
+    ;
+    gulp.src( config.paths.utilJs, {cwd: config.bases.app})
+        .pipe(gulp.dest(config.bases.dist + config.paths.jsDist + '/util/'))
+        //.pipe(rename('main.min.js'))
+        .pipe(uglify({
+            mangle: {
+                except: ['modal'] // Modal gets all messed up and can't be called with javascript, needed for header book now link
+            }
+        }))
+        //.pipe(gulp.dest('assets/js'))
+        //.pipe(rev())
+        .pipe(rename({ suffix: '.min' }))
+        .pipe(gulp.dest(config.bases.dist + config.paths.jsDist + '/util/'))
+        //.pipe(rev.manifest({merge:true}))
+        //.pipe(gulp.dest('./'))
     ;
     return;
 });
@@ -240,20 +273,23 @@ gulp.task('styles', [], function() {
     //    .pipe(gulp.dest(config.bases.dist));
     //return gulp.src('src/sass/style.scss')
     return gulp.src(config.paths.sass, {cwd: config.bases.app})
-        //.pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(sourcemaps.init({loadMaps: true}))
+        //.pipe(sourcemaps.init())
         .pipe(sass({
             errLogToConsole: true,
             outputStyle: 'compact',
             imagePath: "../images",
             includePaths: [
-                config.bowerDir + '/bootstrap-sass-official/assets/stylesheets'
+                config.bowerDir + '/bootstrap-sass-official/assets/stylesheets',
+                config.bowerDir + '/font-awesome/scss'
             ]})
             .on("error", notify.onError(function (error) {
                 this.emit('end');
                 return "Error: " + error.message;
              })))
-        .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-        //.pipe(sourcemaps.write('./',{}))
+        .pipe(autoprefixer('last 2 version', 'ff 8', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
+        .pipe(sourcemaps.write('./',{includeContent: false}))
+        //.pipe(sourcemaps.write())
         .pipe(gulp.dest(config.bases.dist + config.paths.cssDist))
         .pipe(minifycss())
         //.pipe(gulp.dest('assets/css'))
@@ -272,32 +308,47 @@ gulp.task('styles', [], function() {
 // Images
 gulp.task('images', function() {
     return gulp.src(config.paths.images, {cwd: config.bases.app})
-        .pipe(cache(imagemin({ optimizationLevel: 3, progressive: true, interlaced: true })))
+        .pipe(cache(imagemin({
+            optimizationLevel: 3,
+            progressive: true,
+            interlaced: true,
+            svgoPlugins: [{removeUnknownsAndDefaults: false}],
+            //use: [optipng({optimizationLevel: 5})]
+            use: [pngquant({ quality: '65-80', speed: 4 })]
+        })))
         .pipe(gulp.dest( config.bases.dist + config.paths.imageDist))
-        .pipe(notify({ message: 'Images task complete' }));
+        //.pipe(notify({ message: 'Images task complete' }));
+
 });
 
 // Sprites
 gulp.task('sprite', function () {
-    var allImages = gulp.src('src/images/**/*.png').pipe(spritesmith({
-        imgName: '/dev/null',
-        cssName: '_images.scss'
-    }));
-    allImages.pipe(gulp.dest('src/sass/utils/'));
 
-    var spriteData = gulp.src('src/images/seals/*.png').pipe(spritesmith({
-        imgName: '../../images/sprite.png',
-        imgPath: '../images/sprite.png',
-        cssName: '_sprites.scss'
+    var spriteData = gulp.src('src/assets/images/weather-icons/*.gif').pipe(spritesmith({
+        imgName: '../../images/weather-icons.png',
+        imgPath: '../images/weather-icons.png',
+        cssSpritesheetName: 'weather-spritesheet',
+        cssName: '_weather-icons.scss'
     }));
-    spriteData.pipe(gulp.dest('src/sass/utils/'));
+    spriteData.pipe(gulp.dest('src/assets/sass/utils/'));
+
+    var actionSprites = gulp.src('src/assets/images/action-icons/*.png').pipe(spritesmith({
+        imgName: '../../images/action-icons.png',
+        imgPath: '../images/action-icons.png',
+        cssName: '_action-icons.scss',
+        cssSpritesheetName: 'action-spritesheet',
+        cssOpts: {
+            functions: false
+        }
+    }));
+    actionSprites.pipe(gulp.dest('src/assets/sass/utils/'));
 });
 
 gulp.task('reload-sass', ['styles'], function(){
     browserSync.reload();
 })
 
-gulp.task('reload-scripts', ['lint', 'scripts', 'humans', 'clean'], function(){
+gulp.task('reload-scripts', ['lint', 'scripts'], function(){
     browserSync.reload();
 })
 
@@ -326,12 +377,12 @@ gulp.task('watch', ['copy-php', 'copy-css', 'copy-fonts','images', 'styles', 'li
     // --------------------------
     // watch:js
     // --------------------------
-    //gulp.watch('./src/js/**/*.js', ['reload-scripts']);
+    gulp.watch(config.bases.app + config.paths.js, ['reload-scripts']);
 
     // --------------------------
     // watch:images
     // --------------------------
-    gulp.watch('./src/images/**/*.*', ['reload-images']);
+    //gulp.watch(config.bases.app + config.paths.images, ['reload-images']);
 
     // --------------------------
     // watch:php
